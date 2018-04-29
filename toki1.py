@@ -10,6 +10,7 @@ import seaborn as sns
 import argparse
 from datetime import datetime, timedelta
 
+
 def parse_datetime(datetimestring):
     return datetime.strptime(datetimestring, "%Y.%m.%d %H:%M:%S.%f")
 
@@ -171,13 +172,6 @@ def plotidc(counts, t):
     plt.show()
 
 
-parser = argparse.ArgumentParser(description='Traffic statistics.')
-parser.add_argument('command', type=str,
-                    help='comand to be executed')
-parser.add_argument('filename', type=str,
-                    help='filename')
-
-
 class commandeExecutor:
     def __init__(self, args):
         self.timestamps = parsefile(args.filename)
@@ -185,27 +179,32 @@ class commandeExecutor:
         self.packetcounter = getintensity(self.timestamps)
 
     def execute(self, command):
-        if not hasattr(self, command):
+        if not hasattr(self, "command_" + command):
             raise AttributeError("unknown command");
-        getattr(self,command)()
+        getattr(self, "command_" + command)()
 
-    def interarrival(self):
+    def command_interarrival(self):
         plotinterarrivalpdf(self.interarrivals)
 
-    def intensity(self):
+    def command_intensity(self):
         plotintensity(self.packetcounter)
 
-    def packetcountcorrelation(self):
+    def command_packetcountcorrelation(self):
         plotpacketcountcorrelation(self.packetcounter)
 
-    def arrtimecorrelation(self):
+    def command_arrtimecorrelation(self):
         plotarrtimecorrelation(self.interarrivals)
 
-    def idi(self):
+    def command_idi(self):
         plotidi(self.interarrivals, 50)
 
-    def idc(self):
+    def command_idc(self):
         plotidc(self.packetcounter, 200)
+
+    def command_stats(self):
+        print("PMR: {value}".format(value=peaktomean(self.interarrivals)))
+        print("SCV: {value}".format(value=scv(self.interarrivals)))
+        print("Third moment: {value}".format(value=thirdmoment(self.interarrivals)))
 
     def getInterArrivals(self):
         return self.interarrivals
@@ -216,17 +215,26 @@ class commandeExecutor:
     def getPacketCounter(self):
         return self.packetcounter
 
-    def stats(self):
-        print("PMR: {value}".format(value=peaktomean(self.interarrivals)))
-        print("SCV: {value}".format(value=scv(self.interarrivals)))
-        print("Third moment: {value}".format(value=thirdmoment(self.interarrivals)))
-        print("Execution took {value} seconds".format(value=(time.time() - start_time)))
+
+def listcommands():
+    commands = [d for d in dir(commandeExecutor) if "command_" in d]
+    help = "Supported commands:\n"
+    for c in commands:
+        help += c.replace("command_","") + "\n"
+    help += "\n"
+    return help
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Traffic statistics.', usage=listcommands())
+    parser.add_argument('command', type=str,
+                        help='comand to be executed')
+    parser.add_argument('filename', type=str,
+                        help='filename')
+
     start_time = time.time()
 
     args = parser.parse_args()
     executor = commandeExecutor(args)
     executor.execute(args.command)
-
+    print("Execution took {value} seconds".format(value=(time.time() - start_time)))

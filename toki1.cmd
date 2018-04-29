@@ -1,0 +1,1 @@
+@python %~dp0\toki1.py %* 

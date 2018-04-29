@@ -190,4 +190,4 @@ if __name__=='__main__':
     #print "PMR: %s" % peaktomean(interarrivals)
     #print "SCV: %s" % scv(interarrivals)
     #print "Third moment: %s" % thirdmoment(interarrivals)
-    print "Execution took %s seconds" % (time.time() - start_time)
+    print("Execution took %s seconds" % (time.time() - start_time))

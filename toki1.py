@@ -48,7 +48,7 @@ def parsefile(filename):
     with open(filename) as f:
         timestamps = [parse_datetime(line.strip()) for line in f if line.strip()]
         t0 = min(timestamps)
-        nptimestamps = np.fromiter(((t - t0).total_seconds() for t in timestamps),np.float64,len(timestamps))
+        nptimestamps = np.fromiter(((t - t0).total_seconds() for t in timestamps), np.float64, len(timestamps))
         return np.sort(nptimestamps)
 
 
@@ -107,7 +107,7 @@ def plotarrtimecorrelation(interarrivals):
 def plotpacketcountcorrelation(packetcount):
     y_packetcountcorrelation = []
     for lag in range(0, 500):
-        y_packetcountcorrelation.append(autocorr(packetcount, lag)[0,1])
+        y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
     x_packetcountcorrelation = np.linspace(0, 500, 500)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
     plt.xlabel('lag')
@@ -190,27 +190,61 @@ def plotidc(counts, t):
 
 
 parser = argparse.ArgumentParser(description='Traffic statistics.')
-parser.add_argument('filename', metavar='N', type=str,
+parser.add_argument('command', type=str,
+                    help='comand to be executed')
+parser.add_argument('filename', type=str,
                     help='filename')
+
+
+class commandeExecutor:
+    def __init__(self, args):
+        self.timestamps = parsefile(args.filename)
+        self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
+        self.packetcounter = getintensity(self.timestamps)
+
+    def execute(self, command):
+        if not hasattr(self, command):
+            raise AttributeError("unknown command");
+        getattr(self,command)()
+
+    def interarrival(self):
+        plotinterarrivalpdf(self.interarrivals)
+
+    def intensity(self):
+        plotintensity(self.packetcounter)
+
+    def packetcountcorrelation(self):
+        plotpacketcountcorrelation(self.packetcounter)
+
+    def arrtimecorrelation(self):
+        plotarrtimecorrelation(self.interarrivals)
+
+    def idi(self):
+        plotidi(self.interarrivals, 50)
+
+    def idc(self):
+        plotidc(self.packetcounter, 200)
+
+    def getInterArrivals(self):
+        return self.interarrivals
+
+    def getTimeStamps(self):
+        return self.timestamps
+
+    def getPacketCounter(self):
+        return self.packetcounter
+
+    def stats(self):
+        print("PMR: {value}".format(value=peaktomean(self.interarrivals)))
+        print("SCV: {value}".format(value=scv(self.interarrivals)))
+        print("Third moment: {value}".format(value=thirdmoment(self.interarrivals)))
+        print("Execution took {value} seconds".format(value=(time.time() - start_time)))
+
 
 if __name__ == '__main__':
     start_time = time.time()
 
     args = parser.parse_args()
-    timestamps = parsefile(args.filename)
+    executor = commandeExecutor(args)
+    executor.execute(args.command)
 
-    interarrivals = np.fromiter(getinterarrivals(timestamps),np.float64,len(timestamps)-1)
-
-    packetcounter = getintensity(timestamps)
-    # OK
-    #plotinterarrivalpdf(interarrivals)
-    #plotintensity(packetcounter)
-    #plotpacketcountcorrelation(packetcounter)
-
-    #plotarrtimecorrelation(interarrivals)
-    #plotidi(interarrivals,50)
-    plotidc(packetcounter,200)
-    print("PMR: {value}".format(value=peaktomean(interarrivals)))
-    print("SCV: {value}".format(value=scv(interarrivals)))
-    print("Third moment: {value}".format(value=thirdmoment(interarrivals)))
-    print("Execution took {value} seconds".format(value=(time.time() - start_time)))

@@ -10,24 +10,6 @@ import seaborn as sns
 import argparse
 from datetime import datetime, timedelta
 
-# Feladat
-"""Homework:
-paper: http://hsnlab.tmit.bme.hu/%7Emolnar/files/ilk97ext.pdf
-
-Perform a similar traffic analysis study that is in the first paper with an arbitrary chosen time series.
-(It can be measured internet traffic from anywhere from the internet, e.g., http://ita.ee.lbl.gov/ or it can be your 
-own measured traffic or even other types of time series.)"""
-
-# Time series chosen:
-"""
-http://ita.ee.lbl.gov/html/contrib/LBL-TCP-3.html
-The trace ran from 14:10 to 16:10 on Thursday, January 20, 1994 (times are Pacific Standard Time), capturing 
-1.8 million TCP packets (about 0.0002 of these were dropped). The tracing was done on the Ethernet DMZ network over 
-which flows all traffic into or out of the Lawrence Berkeley Laboratory, located in Berkeley, California. The raw 
-trace was made using tcpdump on a Sun Sparcstation using the BPF kernel packet filter. 
-Timestamps have microsecond precision. """
-
-
 def parse_datetime(datetimestring):
     return datetime.strptime(datetimestring, "%Y.%m.%d %H:%M:%S.%f")
 

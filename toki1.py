@@ -103,61 +103,67 @@ def idc(counts, t):
 ###########################################
 
 def plotinterarrivalpdf(interarr):
+    fig, ax = plt.subplots()
     sns.distplot(interarr, 100)
-    plt.xlabel('interarrival length[s]')
-    plt.ylabel('pdf')
-    plt.savefig('interarrival.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('interarrival length[s]')
+    ax.set_ylabel('pdf')
+    fig.savefig('interarrival.png', orientation='landscape', dpi=600)
 
 
 def plotintensity(packetcounter):
+    fig, ax = plt.subplots()
     plt.plot(range(0, len(packetcounter)), packetcounter)
-    plt.xlabel('time')
-    plt.ylabel('intensity')
-    plt.savefig('intensity.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('time')
+    ax.set_ylabel('intensity')
+    fig.savefig('intensity.png', orientation='landscape', dpi=600)
 
 
 def plotarrtimecorrelation(interarrivals):
+    fig, ax = plt.subplots()
     y_arrtimecorrelation = []
     for lag in range(0, 500):
         y_arrtimecorrelation.append(autocorr(interarrivals, lag)[0, 1])
     x_arrtimecorrelation = np.linspace(0, 500, 500)
     plt.plot(x_arrtimecorrelation, y_arrtimecorrelation)
-    plt.xlabel('lag')
-    plt.ylabel('correlation')
-    plt.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('lag')
+    ax.set_ylabel('correlation')
+    fig.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
 
 
 def plotpacketcountcorrelation(packetcount):
+    fig, ax = plt.subplots()
     y_packetcountcorrelation = []
     for lag in range(0, 500):
         y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
     x_packetcountcorrelation = np.linspace(0, 500, 500)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
-    plt.xlabel('lag')
-    plt.ylabel('correlation')
-    plt.savefig('packetcountcorrelation.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('lag')
+    ax.set_ylabel('correlation')
+    fig.savefig('packetcountcorrelation.png', orientation='landscape', dpi=600)
 
 
 def plotidi(interarr, k):
+    fig, ax = plt.subplots()
     idilist = []
     for m in range(1, k):
         idilist.append(idi(interarr, m))
     idi_x = np.linspace(0, k, k - 1)
     plt.plot(idi_x, idilist)
-    plt.xlabel('lag')
-    plt.ylabel('IDI')
-    plt.savefig('idi.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('lag')
+    ax.set_ylabel('IDI')
+    fig.savefig('idi.png', orientation='landscape', dpi=600)
 
 
 def plotidc(counts, t):
+    fig, ax = plt.subplots()
     idclist = []
     for m in range(1, t):
         idclist.append(idi(counts, m))
     idc_x = np.linspace(0, t, t - 1)
     plt.plot(idc_x, idclist)
-    plt.xlabel('time')
-    plt.ylabel('IDC')
-    plt.savefig('idc.png', orientation='landscape', dpi=600)
+    ax.set_xlabel('time')
+    ax.set_ylabel('IDC')
+    fig.savefig('idc.png', orientation='landscape', dpi=600)
 
 
 ###########################################
@@ -218,11 +224,11 @@ def listcommands():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Traffic statistics.',epilog=listcommands())
-    
+    parser = argparse.ArgumentParser(description='Traffic statistics.', epilog=listcommands())
+
     parser.add_argument('command', type=str,
-                        help='comand to be executed',nargs='+')
-    parser.add_argument('-i','--input', type=str,
+                        help='comand to be executed', nargs='+')
+    parser.add_argument('-i', '--input', type=str,
                         help='filename')
 
     start_time = time.time()

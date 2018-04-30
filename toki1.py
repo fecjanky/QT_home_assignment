@@ -166,7 +166,7 @@ def plotidc(counts, t):
 
 class commandeExecutor:
     def __init__(self, args):
-        self.timestamps = parsefile(args.filename)
+        self.timestamps = parsefile(args.input)
         self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
         self.packetcounter = getintensity(self.timestamps)
 

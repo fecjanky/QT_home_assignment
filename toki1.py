@@ -130,12 +130,12 @@ def plotarrtimecorrelation(interarrivals):
     fig.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
 
 
-def plotpacketcountcorrelation(packetcount):
+def plotpacketcountcorrelation(packetcount, lagrange=500):
     fig, ax = plt.subplots()
     y_packetcountcorrelation = []
-    for lag in range(0, 500):
+    for lag in range(0, lagrange):
         y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
-    x_packetcountcorrelation = np.linspace(0, 500, 500)
+    x_packetcountcorrelation = np.linspace(0, lagrange, lagrange)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
     ax.set_xlabel('lag')
     ax.set_ylabel('correlation')
@@ -171,39 +171,45 @@ def plotidc(counts, t):
 ###########################################
 
 class commandeExecutor:
-    def __init__(self, args):
-        self.timestamps = parsefile(args.input)
-        self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
-        self.packetcounter = getintensity(self.timestamps)
+    def __init__(self, args = None):
+        if args is not None:
+            self.timestamps = parsefile(args.input)
+            self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
+            self.packetcounter = getintensity(self.timestamps)
 
-    def execute(self, command):
+    def execute(self, command, args):
         if not hasattr(self, "command_" + command):
             raise AttributeError("unknown command");
-        getattr(self, "command_" + command)()
+        getattr(self, "command_" + command)(args)
 
-    def command_interarrival(self):
+    ##########################
+    def command_interarrival(self, args):
         plotinterarrivalpdf(self.interarrivals)
 
-    def command_intensity(self):
+    def command_intensity(self, args):
         plotintensity(self.packetcounter)
 
-    def command_packetcountcorrelation(self):
-        plotpacketcountcorrelation(self.packetcounter)
+    def command_packetcountcorrelation(self, sargs):
+        parser = argparse.ArgumentParser(description='Packet auto correlation help.', prog="packetcountcorrelation")
+        parser.add_argument("--lag", type=int, help="size of lag window", default=500)
+        args = parser.parse_args(sargs.split())
+        plotpacketcountcorrelation(self.packetcounter,args.lag)
 
-    def command_arrtimecorrelation(self):
+    def command_arrtimecorrelation(self, args):
         plotarrtimecorrelation(self.interarrivals)
 
-    def command_idi(self):
+    def command_idi(self, args):
         plotidi(self.interarrivals, 50)
 
-    def command_idc(self):
+    def command_idc(self, args):
         plotidc(self.packetcounter, 200)
 
-    def command_stats(self):
+    def command_stats(self, args):
         print("PMR: {value}".format(value=peaktomean(self.interarrivals)))
         print("SCV: {value}".format(value=scv(self.interarrivals)))
         print("Third moment: {value}".format(value=thirdmoment(self.interarrivals)))
 
+    ##########################
     def getInterArrivals(self):
         return self.interarrivals
 
@@ -218,8 +224,9 @@ def listcommands():
     commands = [d for d in dir(commandeExecutor) if "command_" in d]
     help = "Supported commands:\n"
     for c in commands:
-        help += c.replace("command_", "") + "\n"
+        help += c.replace("command_", "") + ","
     help += "\n"
+    help += " - add 'help' after command to get more help on the command itself"
     return help
 
 
@@ -230,11 +237,17 @@ if __name__ == '__main__':
                         help='comand to be executed', nargs='+')
     parser.add_argument('-i', '--input', type=str,
                         help='filename')
+    parser.add_argument('-a', '--args', type=str,
+                        help='args for the command' , default="")
 
     start_time = time.time()
 
     args = parser.parse_args()
+
+    if "help" in args.command:
+        commandeExecutor().execute(args.command[0], args.args + " --help")
+
     executor = commandeExecutor(args)
     for c in args.command:
-        executor.execute(c)
+        executor.execute(c, args.args)
     print("Execution took {value} seconds".format(value=(time.time() - start_time)))

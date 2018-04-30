@@ -1,10 +1,7 @@
 import time
 import itertools
-# import matplotlib
-# matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import numpy as np
-import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
 import argparse
@@ -24,7 +21,6 @@ def test_parse_datetime():
     assert date.minute == 21
     assert date.second == 33
     assert date.microsecond == 420000
-    pass
 
 
 def parsefile(filename):
@@ -44,13 +40,6 @@ def getinterarrivals(arrivals):
         i = i + 1
 
 
-def plotinterarrivalpdf(interarr):
-    sns.distplot(interarr, 100)
-    plt.xlabel('interarrival length')
-    plt.ylabel('pdf')
-    plt.show()
-
-
 def getintensity(timelist):
     n = 0
     packetcounter = [0]
@@ -63,49 +52,8 @@ def getintensity(timelist):
     return packetcounter
 
 
-def plotintensity(packetcounter):
-    plt.plot(range(0, len(packetcounter)), packetcounter)
-    plt.xlabel('time')
-    plt.ylabel('intensity')
-    plt.show()
-
-
 def autocorr(x, lag):
-    # return np.correlate(x[0:len(x)-lag],x[0:len(x)-lag])[0]
     return np.corrcoef(x[0:len(x) - lag], x[lag:len(x)])
-    # return np.corrcoef(np.array([x[0:len(x) - lag], x[lag:len(x)]]))
-
-
-def plotarrtimecorrelation(interarrivals):
-    y_arrtimecorrelation = []
-    for lag in range(0, 500):
-        y_arrtimecorrelation.append(autocorr(interarrivals, lag)[0, 1])
-    x_arrtimecorrelation = np.linspace(0, 500, 500)
-    plt.plot(x_arrtimecorrelation, y_arrtimecorrelation)
-    plt.xlabel('lag')
-    plt.ylabel('correlation')
-    plt.show()
-
-
-def plotpacketcountcorrelation(packetcount):
-    y_packetcountcorrelation = []
-    for lag in range(0, 500):
-        y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
-    x_packetcountcorrelation = np.linspace(0, 500, 500)
-    plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
-    plt.xlabel('lag')
-    plt.ylabel('correlation')
-    plt.show()
-
-
-# General statistics
-# --------------------
-"""def mean(arr):
-    summa = 0
-    for i in arr:
-        summa += i
-    mean = summa / len(arr)
-    return mean"""
 
 
 # peak to mean ratio
@@ -138,17 +86,6 @@ def idi(interarr, k):
     return idival
 
 
-def plotidi(interarr, k):
-    idilist = []
-    for m in range(1, k):
-        idilist.append(idi(interarr, m))
-    idi_x = np.linspace(0, k, k - 1)
-    plt.plot(idi_x, idilist)
-    plt.xlabel('lag')
-    plt.ylabel('IDI')
-    plt.show()
-
-
 def idc(counts, t):
     sumlist = []
     for i in range(0, len(counts) - t):
@@ -161,6 +98,57 @@ def idc(counts, t):
     return idcval
 
 
+###########################################
+# plotting
+###########################################
+
+def plotinterarrivalpdf(interarr):
+    sns.distplot(interarr, 100)
+    plt.xlabel('interarrival length[s]')
+    plt.ylabel('pdf')
+    plt.savefig('interarrival.png', orientation='landscape', dpi=600)
+
+
+def plotintensity(packetcounter):
+    plt.plot(range(0, len(packetcounter)), packetcounter)
+    plt.xlabel('time')
+    plt.ylabel('intensity')
+    plt.savefig('intensity.png', orientation='landscape', dpi=600)
+
+
+def plotarrtimecorrelation(interarrivals):
+    y_arrtimecorrelation = []
+    for lag in range(0, 500):
+        y_arrtimecorrelation.append(autocorr(interarrivals, lag)[0, 1])
+    x_arrtimecorrelation = np.linspace(0, 500, 500)
+    plt.plot(x_arrtimecorrelation, y_arrtimecorrelation)
+    plt.xlabel('lag')
+    plt.ylabel('correlation')
+    plt.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
+
+
+def plotpacketcountcorrelation(packetcount):
+    y_packetcountcorrelation = []
+    for lag in range(0, 500):
+        y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
+    x_packetcountcorrelation = np.linspace(0, 500, 500)
+    plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
+    plt.xlabel('lag')
+    plt.ylabel('correlation')
+    plt.savefig('packetcountcorrelation.png', orientation='landscape', dpi=600)
+
+
+def plotidi(interarr, k):
+    idilist = []
+    for m in range(1, k):
+        idilist.append(idi(interarr, m))
+    idi_x = np.linspace(0, k, k - 1)
+    plt.plot(idi_x, idilist)
+    plt.xlabel('lag')
+    plt.ylabel('IDI')
+    plt.savefig('idi.png', orientation='landscape', dpi=600)
+
+
 def plotidc(counts, t):
     idclist = []
     for m in range(1, t):
@@ -169,8 +157,12 @@ def plotidc(counts, t):
     plt.plot(idc_x, idclist)
     plt.xlabel('time')
     plt.ylabel('IDC')
-    plt.show()
+    plt.savefig('idc.png', orientation='landscape', dpi=600)
 
+
+###########################################
+# command handling
+###########################################
 
 class commandeExecutor:
     def __init__(self, args):
@@ -220,21 +212,23 @@ def listcommands():
     commands = [d for d in dir(commandeExecutor) if "command_" in d]
     help = "Supported commands:\n"
     for c in commands:
-        help += c.replace("command_","") + "\n"
+        help += c.replace("command_", "") + "\n"
     help += "\n"
     return help
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Traffic statistics.', usage=listcommands())
+    parser = argparse.ArgumentParser(description='Traffic statistics.',epilog=listcommands())
+    
     parser.add_argument('command', type=str,
-                        help='comand to be executed')
-    parser.add_argument('filename', type=str,
+                        help='comand to be executed',nargs='+')
+    parser.add_argument('-i','--input', type=str,
                         help='filename')
 
     start_time = time.time()
 
     args = parser.parse_args()
     executor = commandeExecutor(args)
-    executor.execute(args.command)
+    for c in args.command:
+        executor.execute(c)
     print("Execution took {value} seconds".format(value=(time.time() - start_time)))

@@ -1,1 +1,1 @@
-@python %~dp0\toki1.py %* 
+@python %~dp0\%~n0.py %* 

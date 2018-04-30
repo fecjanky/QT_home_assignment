@@ -79,33 +79,31 @@ def thirdmoment(interarr):
     return stats.skew(interarray)
 
 
-idi_sum_cache = {}
+windowed_sum_cache = {}
 
 
-def get_idi_sum_list(interarr, k):
-    if (interarr.ctypes.data, k) not in idi_sum_cache:
-        idi_sum_cache[(interarr.ctypes.data, k)] = np.fromiter(
-            (np.sum(interarr[i:i + k]) for i in range(0, len(interarr) - k)), np.float64)
-    return idi_sum_cache[(interarr.ctypes.data, k)]
+def get_windowed_sum(interarr, k):
+    assert k > 0
+    if (interarr.ctypes.data, k) not in windowed_sum_cache:
+        if k == 1:
+            windowed_sum_cache[(interarr.ctypes.data, k)] = interarr
+        else:
+            prev = get_windowed_sum(interarr, k - 1)
+            sumlist = np.fromiter((prev[i] + interarr[i + k - 1] for i in range(0, len(prev) - 1)), np.float64)
+            windowed_sum_cache[(interarr.ctypes.data, k)] = sumlist
+    return windowed_sum_cache[(interarr.ctypes.data, k)]
 
 
 def idi(interarr, k):
-    prev = get_idi_sum_list(interarr, k - 1)
-    current = np.sum(interarr[len(interarr) - k - 1:len(interarr) - 1])
-    sumlist = np.append(prev, [current])
-    idi_sum_cache[(interarr.ctypes.data, k)] = sumlist
+    assert k > 0
+    sumlist = get_windowed_sum(interarr, k)
     variance = np.var(sumlist)
     idival = variance / (k * np.mean(interarr) * np.mean(interarr))
     return idival
 
 
 def idc(counts, t):
-    sumlist = []
-    for i in range(0, len(counts) - t):
-        summa = 0
-        for j in range(i, i + t):
-            summa += counts[j]
-        sumlist.append(summa)
+    sumlist = get_windowed_sum(counts, t)
     variance = np.var(sumlist)
     idcval = variance / (t * np.mean(counts))
     return idcval
@@ -167,9 +165,7 @@ def plotidi(interarr, k):
 
 def plotidc(counts, t):
     fig, ax = plt.subplots()
-    idclist = []
-    for m in range(1, t):
-        idclist.append(idc(counts, m))
+    idclist = [idc(counts, m) for m in range(1, t)]
     idc_x = np.linspace(0, t, t - 1)
     plt.plot(idc_x, idclist)
     ax.set_xlabel('time[s]')

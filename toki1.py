@@ -192,7 +192,7 @@ class commandExecutor:
         parser = argparse.ArgumentParser(description='Arrival time auto correlation help.', prog="arrtimecorrelation")
         parser.add_argument("--lag", type=int, help="size of lag window", default=500)
         args = parser.parse_args(sargs.split())
-        plot_data_correlation(self.packetcounter, "packet_count_correlation", args.lag)
+        plot_data_correlation(self.interarrivals, "interarrival_correlation", args.lag)
 
     def command_idi(self, args):
         plot_idi(self.interarrivals, 50)

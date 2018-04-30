@@ -1,3 +1,4 @@
+# coding=utf8
 import time
 import itertools
 from matplotlib import pyplot as plt
@@ -90,7 +91,7 @@ def idc(counts, t):
     sumlist = []
     for i in range(0, len(counts) - t):
         summa = 0
-        for j in range(i, i + k):
+        for j in range(i, i + t):
             summa += counts[j]
         sumlist.append(summa)
     variance = np.var(sumlist)
@@ -158,7 +159,7 @@ def plotidc(counts, t):
     fig, ax = plt.subplots()
     idclist = []
     for m in range(1, t):
-        idclist.append(idi(counts, m))
+        idclist.append(idc(counts, m))
     idc_x = np.linspace(0, t, t - 1)
     plt.plot(idc_x, idclist)
     ax.set_xlabel('time[s]')

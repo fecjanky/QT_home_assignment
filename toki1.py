@@ -1,6 +1,7 @@
 # coding=utf8
 import time
 import itertools
+import math
 from matplotlib import pyplot as plt
 import numpy as np
 import scipy.stats as stats
@@ -24,33 +25,37 @@ def test_parse_datetime():
     assert date.microsecond == 420000
 
 
-def parsefile(filename):
+def parse_datetime_alt(datetimestring, col=0):
+    return float(datetimestring.split()[col])
+
+
+def test_parse_datetime_alt():
+    date = parse_datetime_alt("0.023775 1 2 23 2436 2")
+    assert date.second == 0.023775
+
+
+def parsefile(filename, alternativeSyntax=False, column=0):
     with open(filename) as f:
-        timestamps = [parse_datetime(line.strip()) for line in f if line.strip()]
-        t0 = min(timestamps)
-        nptimestamps = np.fromiter(((t - t0).total_seconds() for t in timestamps), np.float64, len(timestamps))
-        return np.sort(nptimestamps)
+        if not alternativeSyntax:
+            timestamps = [parse_datetime(line.strip()) for line in f if line.strip()]
+            t0 = min(timestamps)
+            nptimestamps = np.fromiter(((t - t0).total_seconds() for t in timestamps), np.float64, len(timestamps))
+            return np.sort(nptimestamps)
+        else:
+            return np.fromiter((parse_datetime_alt(line.strip(), column) for line in f if line.strip()),
+                               np.float64)
 
 
 def getinterarrivals(arrivals):
     if len(arrivals) is 0:
         return [0]
-    i = 1
-    while i < len(arrivals):
-        yield arrivals[i] - arrivals[i - 1]
-        i = i + 1
+    return np.subtract(np.array(arrivals[1:]), arrivals[0:-1])
 
 
 def getintensity(timelist):
-    n = 0
-    packetcounter = [0]
-    for t in timelist:
-        if t - timelist[0] > n + 1:
-            diff = t - timelist[0]
-            n += diff
-            packetcounter += itertools.repeat(0, int(diff + 1))
-        packetcounter[int(n)] += 1
-    return packetcounter
+    if len(timelist) < 1:
+        return []
+    return np.histogram(timelist, bins=int(math.floor(timelist[-1])))[0]
 
 
 def autocorr(x, lag):
@@ -74,14 +79,21 @@ def thirdmoment(interarr):
     return stats.skew(interarray)
 
 
-# i is arbitrary
+idi_sum_cache = {}
+
+
+def get_idi_sum_list(interarr, k):
+    if (interarr.ctypes.data, k) not in idi_sum_cache:
+        idi_sum_cache[(interarr.ctypes.data, k)] = np.fromiter(
+            (np.sum(interarr[i:i + k]) for i in range(0, len(interarr) - k)), np.float64)
+    return idi_sum_cache[(interarr.ctypes.data, k)]
+
+
 def idi(interarr, k):
-    sumlist = []
-    for i in range(0, len(interarr) - k):
-        summa = 0
-        for j in range(i, i + k):
-            summa += interarr[j]
-        sumlist.append(summa)
+    prev = get_idi_sum_list(interarr, k - 1)
+    current = np.sum(interarr[len(interarr) - k - 1:len(interarr) - 1])
+    sumlist = np.append(prev, [current])
+    idi_sum_cache[(interarr.ctypes.data, k)] = sumlist
     variance = np.var(sumlist)
     idival = variance / (k * np.mean(interarr) * np.mean(interarr))
     return idival
@@ -145,9 +157,7 @@ def plotpacketcountcorrelation(packetcount, lagrange=500):
 
 def plotidi(interarr, k):
     fig, ax = plt.subplots()
-    idilist = []
-    for m in range(1, k):
-        idilist.append(idi(interarr, m))
+    idilist = [idi(interarr, m) for m in range(1, k)]
     idi_x = np.linspace(0, k, k - 1)
     plt.plot(idi_x, idilist)
     ax.set_xlabel('lag')
@@ -172,9 +182,9 @@ def plotidc(counts, t):
 ###########################################
 
 class commandeExecutor:
-    def __init__(self, args = None):
+    def __init__(self, args=None):
         if args is not None:
-            self.timestamps = parsefile(args.input)
+            self.timestamps = parsefile(args.input, args.tcpdump)
             self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
             self.packetcounter = getintensity(self.timestamps)
 
@@ -194,7 +204,7 @@ class commandeExecutor:
         parser = argparse.ArgumentParser(description='Packet auto correlation help.', prog="packetcountcorrelation")
         parser.add_argument("--lag", type=int, help="size of lag window", default=500)
         args = parser.parse_args(sargs.split())
-        plotpacketcountcorrelation(self.packetcounter,args.lag)
+        plotpacketcountcorrelation(self.packetcounter, args.lag)
 
     def command_arrtimecorrelation(self, args):
         plotarrtimecorrelation(self.interarrivals)
@@ -239,7 +249,9 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', type=str,
                         help='filename')
     parser.add_argument('-a', '--args', type=str,
-                        help='args for the command' , default="")
+                        help='args for the command', default="")
+    parser.add_argument('-t', '--tcpdump', default=False, action='store_true',
+                        help='use tcpdump format for input file', )
 
     start_time = time.time()
 

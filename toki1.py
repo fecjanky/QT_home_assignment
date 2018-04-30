@@ -114,7 +114,7 @@ def idc(counts, t):
 
 def plot_interarrival_pdf(interarr):
     fig, ax = plt.subplots()
-    sns.distplot(interarr, 100)
+    sns.distplot(interarr)
     ax.set_xlabel('interarrival length[s]')
     ax.set_ylabel('pdf')
     fig.savefig('interarrival.png', orientation='landscape', dpi=600)
@@ -128,24 +128,14 @@ def plot_intensity(packetcounter):
     fig.savefig('intensity.png', orientation='landscape', dpi=600)
 
 
-def plot_arr_time_correlation(interarrivals):
+def plot_data_correlation(data, plot_name, lagrange=500):
     fig, ax = plt.subplots()
-    y_arrtimecorrelation = [calc_auto_corr(interarrivals, lag)[0, 1] for lag in range(0, 500)]
-    x_arrtimecorrelation = np.linspace(0, 500, 500)
-    plt.plot(x_arrtimecorrelation, y_arrtimecorrelation)
-    ax.set_xlabel('lag')
-    ax.set_ylabel('correlation')
-    fig.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
-
-
-def plot_packet_count_correlation(packetcount, lagrange=500):
-    fig, ax = plt.subplots()
-    y_packetcountcorrelation = [calc_auto_corr(packetcount, lag)[0, 1] for lag in range(0, lagrange)]
+    y_packetcountcorrelation = [calc_auto_corr(data, lag)[0, 1] for lag in range(0, lagrange)]
     x_packetcountcorrelation = np.linspace(0, lagrange, lagrange)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
     ax.set_xlabel('lag')
     ax.set_ylabel('correlation')
-    fig.savefig('packetcountcorrelation.png', orientation='landscape', dpi=600)
+    fig.savefig(plot_name + '.png', orientation='landscape', dpi=600)
 
 
 def plot_idi(interarr, k):
@@ -195,10 +185,13 @@ class commandExecutor:
         parser = argparse.ArgumentParser(description='Packet auto correlation help.', prog="packetcountcorrelation")
         parser.add_argument("--lag", type=int, help="size of lag window", default=500)
         args = parser.parse_args(sargs.split())
-        plot_packet_count_correlation(self.packetcounter, args.lag)
+        plot_data_correlation(self.packetcounter, "packet_count_correlation", args.lag)
 
-    def command_arrtimecorrelation(self, args):
-        plot_arr_time_correlation(self.interarrivals)
+    def command_arrtimecorrelation(self, sargs):
+        parser = argparse.ArgumentParser(description='Arrival time auto correlation help.', prog="arrtimecorrelation")
+        parser.add_argument("--lag", type=int, help="size of lag window", default=500)
+        args = parser.parse_args(sargs.split())
+        plot_data_correlation(self.packetcounter, "packet_count_correlation", args.lag)
 
     def command_idi(self, args):
         plot_idi(self.interarrivals, 50)

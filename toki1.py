@@ -46,37 +46,35 @@ def parsefile(filename, alternativeSyntax=False, column=0):
                                np.float64)
 
 
-def getinterarrivals(arrivals):
+def calc_interarrivals(arrivals):
     if len(arrivals) is 0:
         return [0]
     return np.subtract(np.array(arrivals[1:]), arrivals[0:-1])
 
 
-def getintensity(timelist):
+def calc_intensity(timelist):
     if len(timelist) < 1:
         return []
     return np.histogram(timelist, bins=int(math.floor(timelist[-1])))[0]
 
 
-def autocorr(x, lag):
+def calc_auto_corr(x, lag):
     return np.corrcoef(x[0:len(x) - lag], x[lag:len(x)])
 
 
 # peak to mean ratio
-def peaktomean(interarr):
-    peak = max(interarr)
-    return peak / np.mean(interarr)
+def calc_peak_to_mean(interarr):
+    return np.max(interarr) / np.mean(interarr)
 
 
 # squared coefficient variation
-def scv(interarr):
+def calc_scv(interarr):
     return np.var(interarr) / (np.mean(interarr) * np.mean(interarr))
 
 
 # skewness
-def thirdmoment(interarr):
-    interarray = np.array(interarr)
-    return stats.skew(interarray)
+def calc_third_moment(interarr):
+    return stats.skew(interarr)
 
 
 windowed_sum_cache = {}
@@ -103,6 +101,7 @@ def idi(interarr, k):
 
 
 def idc(counts, t):
+    assert t > 0
     sumlist = get_windowed_sum(counts, t)
     variance = np.var(sumlist)
     idcval = variance / (t * np.mean(counts))
@@ -113,7 +112,7 @@ def idc(counts, t):
 # plotting
 ###########################################
 
-def plotinterarrivalpdf(interarr):
+def plot_interarrival_pdf(interarr):
     fig, ax = plt.subplots()
     sns.distplot(interarr, 100)
     ax.set_xlabel('interarrival length[s]')
@@ -121,7 +120,7 @@ def plotinterarrivalpdf(interarr):
     fig.savefig('interarrival.png', orientation='landscape', dpi=600)
 
 
-def plotintensity(packetcounter):
+def plot_intensity(packetcounter):
     fig, ax = plt.subplots()
     plt.plot(range(0, len(packetcounter)), packetcounter)
     ax.set_xlabel('time[s]')
@@ -129,11 +128,9 @@ def plotintensity(packetcounter):
     fig.savefig('intensity.png', orientation='landscape', dpi=600)
 
 
-def plotarrtimecorrelation(interarrivals):
+def plot_arr_time_correlation(interarrivals):
     fig, ax = plt.subplots()
-    y_arrtimecorrelation = []
-    for lag in range(0, 500):
-        y_arrtimecorrelation.append(autocorr(interarrivals, lag)[0, 1])
+    y_arrtimecorrelation = [calc_auto_corr(interarrivals, lag)[0, 1] for lag in range(0, 500)]
     x_arrtimecorrelation = np.linspace(0, 500, 500)
     plt.plot(x_arrtimecorrelation, y_arrtimecorrelation)
     ax.set_xlabel('lag')
@@ -141,11 +138,9 @@ def plotarrtimecorrelation(interarrivals):
     fig.savefig('arrtimecorrelation.png', orientation='landscape', dpi=600)
 
 
-def plotpacketcountcorrelation(packetcount, lagrange=500):
+def plot_packet_count_correlation(packetcount, lagrange=500):
     fig, ax = plt.subplots()
-    y_packetcountcorrelation = []
-    for lag in range(0, lagrange):
-        y_packetcountcorrelation.append(autocorr(packetcount, lag)[0, 1])
+    y_packetcountcorrelation = [calc_auto_corr(packetcount, lag)[0, 1] for lag in range(0, lagrange)]
     x_packetcountcorrelation = np.linspace(0, lagrange, lagrange)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
     ax.set_xlabel('lag')
@@ -153,7 +148,7 @@ def plotpacketcountcorrelation(packetcount, lagrange=500):
     fig.savefig('packetcountcorrelation.png', orientation='landscape', dpi=600)
 
 
-def plotidi(interarr, k):
+def plot_idi(interarr, k):
     fig, ax = plt.subplots()
     idilist = [idi(interarr, m) for m in range(1, k)]
     idi_x = np.linspace(0, k, k - 1)
@@ -163,7 +158,7 @@ def plotidi(interarr, k):
     fig.savefig('idi.png', orientation='landscape', dpi=600)
 
 
-def plotidc(counts, t):
+def plot_idc(counts, t):
     fig, ax = plt.subplots()
     idclist = [idc(counts, m) for m in range(1, t)]
     idc_x = np.linspace(0, t, t - 1)
@@ -177,12 +172,12 @@ def plotidc(counts, t):
 # command handling
 ###########################################
 
-class commandeExecutor:
+class commandExecutor:
     def __init__(self, args=None):
         if args is not None:
             self.timestamps = parsefile(args.input, args.tcpdump)
-            self.interarrivals = np.fromiter(getinterarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
-            self.packetcounter = getintensity(self.timestamps)
+            self.interarrivals = np.fromiter(calc_interarrivals(self.timestamps), np.float64, len(self.timestamps) - 1)
+            self.packetcounter = calc_intensity(self.timestamps)
 
     def execute(self, command, args):
         if not hasattr(self, "command_" + command):
@@ -191,30 +186,30 @@ class commandeExecutor:
 
     ##########################
     def command_interarrival(self, args):
-        plotinterarrivalpdf(self.interarrivals)
+        plot_interarrival_pdf(self.interarrivals)
 
     def command_intensity(self, args):
-        plotintensity(self.packetcounter)
+        plot_intensity(self.packetcounter)
 
     def command_packetcountcorrelation(self, sargs):
         parser = argparse.ArgumentParser(description='Packet auto correlation help.', prog="packetcountcorrelation")
         parser.add_argument("--lag", type=int, help="size of lag window", default=500)
         args = parser.parse_args(sargs.split())
-        plotpacketcountcorrelation(self.packetcounter, args.lag)
+        plot_packet_count_correlation(self.packetcounter, args.lag)
 
     def command_arrtimecorrelation(self, args):
-        plotarrtimecorrelation(self.interarrivals)
+        plot_arr_time_correlation(self.interarrivals)
 
     def command_idi(self, args):
-        plotidi(self.interarrivals, 50)
+        plot_idi(self.interarrivals, 50)
 
     def command_idc(self, args):
-        plotidc(self.packetcounter, 200)
+        plot_idc(self.packetcounter, 200)
 
     def command_stats(self, args):
-        print("PMR: {value}".format(value=peaktomean(self.interarrivals)))
-        print("SCV: {value}".format(value=scv(self.interarrivals)))
-        print("Third moment: {value}".format(value=thirdmoment(self.interarrivals)))
+        print("PMR: {value}".format(value=calc_peak_to_mean(self.interarrivals)))
+        print("SCV: {value}".format(value=calc_scv(self.interarrivals)))
+        print("Third moment: {value}".format(value=calc_third_moment(self.interarrivals)))
 
     ##########################
     def getInterArrivals(self):
@@ -228,7 +223,7 @@ class commandeExecutor:
 
 
 def listcommands():
-    commands = [d for d in dir(commandeExecutor) if "command_" in d]
+    commands = [d for d in dir(commandExecutor) if "command_" in d]
     help = "Supported commands:\n"
     for c in commands:
         help += c.replace("command_", "") + ","
@@ -254,9 +249,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if "help" in args.command:
-        commandeExecutor().execute(args.command[0], args.args + " --help")
+        commandExecutor().execute(args.command[0], args.args + " --help")
 
-    executor = commandeExecutor(args)
+    executor = commandExecutor(args)
     for c in args.command:
         executor.execute(c, args.args)
     print("Execution took {value} seconds".format(value=(time.time() - start_time)))

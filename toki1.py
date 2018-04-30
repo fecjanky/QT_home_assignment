@@ -87,8 +87,8 @@ def get_windowed_sum(interarr, k):
             windowed_sum_cache[(interarr.ctypes.data, k)] = interarr
         else:
             prev = get_windowed_sum(interarr, k - 1)
-            sumlist = np.fromiter((prev[i] + interarr[i + k - 1] for i in range(0, len(prev))), np.float64,
-                                  int(math.floor(len(interarr) / k)))
+            sumlist = np.fromiter((prev[i] + interarr[i + k - 1] for i in range(0, len(prev) - 1)), np.float64,
+                                  len(prev) - 1)
             windowed_sum_cache[(interarr.ctypes.data, k)] = sumlist
     return windowed_sum_cache[(interarr.ctypes.data, k)]
 

@@ -113,8 +113,8 @@ def plotinterarrivalpdf(interarr):
 def plotintensity(packetcounter):
     fig, ax = plt.subplots()
     plt.plot(range(0, len(packetcounter)), packetcounter)
-    ax.set_xlabel('time')
-    ax.set_ylabel('intensity')
+    ax.set_xlabel('time[s]')
+    ax.set_ylabel('intensity[pkt/s]')
     fig.savefig('intensity.png', orientation='landscape', dpi=600)
 
 
@@ -161,7 +161,7 @@ def plotidc(counts, t):
         idclist.append(idi(counts, m))
     idc_x = np.linspace(0, t, t - 1)
     plt.plot(idc_x, idclist)
-    ax.set_xlabel('time')
+    ax.set_xlabel('time[s]')
     ax.set_ylabel('IDC')
     fig.savefig('idc.png', orientation='landscape', dpi=600)
 

@@ -7,6 +7,7 @@ import time
 import argparse
 import networkx as nx
 import statistics
+import collections
 
 
 class PolarPoint:
@@ -25,7 +26,7 @@ class PolarPoint:
 
     def hyperbolic_distance(self, p2):
         dtheta = math.pi - math.fabs(math.pi - math.fabs(self.azimuth - p2.azimuth))
-        return self.radius + p2.radius + 2 * math.log(dtheta / 2)
+        return self.radius + p2.radius + 2 * math.log(math.sin(dtheta / 2))
 
     def to_cartesian(self):
         return self.radius * math.cos(self.azimuth), self.radius * math.sin(self.azimuth)
@@ -115,13 +116,13 @@ class Graph:
         avg_degs = ((r, statistics.mean(a)) for r, a in degs if len(a) > 0)
         return zip(*avg_degs)
 
-    def plot_stats(self, filename=None):
+    def plot_degree_vs_radius(self, filename=None):
         radius, avg_degs = self.get_avg_degs()
         r = range(0, radius[-1] + 1, 1)
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.semilogy(radius, avg_degs, color='black', marker='x', label="simulated avg. degree")
-        ax.semilogy(r, list(map(lambda r: 4 / math.pi * nodes * math.exp(-r / 2), r)), color='red',
+        ax.semilogy(r, list(map(lambda r: 4 / math.pi * self.nodecount * math.exp(-r / 2), r)), color='red',
                     label='theoretical avg. degree')
         ax.set_xlabel('radius')
         ax.set_ylabel('average degree')
@@ -129,8 +130,26 @@ class Graph:
                    ncol=2, mode="expand", borderaxespad=0.)
         outfile = filename if filename is not None else 'graph_stats.png'
         fig.savefig(outfile, orientation='landscape', dpi=1200)
-        print("printing stats")
-        plt.clf()
+        fig.clf()
+        plt.close()
+
+    def plot_stats(self, filename=None):
+        radius, avg_degs = self.get_avg_degs()
+        print("Average degree of network radius={radius} and nodecount={nodes} is {avg}".format(radius=self.radius,
+                                                                                                nodes=self.nodecount,
+                                                                                                avg=avg_degs[-1]))
+        degree_sequence = sorted([d for n, d in self.as_nx_graph().degree()], reverse=True)
+        degreeCount = collections.Counter(degree_sequence)
+        deg, cnt = zip(*degreeCount.items())
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.loglog(deg, list(cnt), marker='o', color="blue", linestyle='None')
+        ax.set_title("Degree distribution")
+        ax.set_ylabel("P(k)")
+        ax.set_xlabel("Node degree k")
+        outfile = filename if filename is not None else 'graph_stats.png'
+        fig.savefig(outfile, orientation='landscape', dpi=1200)
+        fig.clf()
         plt.close()
 
 

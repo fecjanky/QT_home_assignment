@@ -66,8 +66,11 @@ class Graph:
         return [p for p in itertools.combinations(self.points, 2) if lte(p[0].hyperbolic_distance(p[1]), self.radius)]
 
     # use rejection sampling to generate points with a given distribution
-    def generate_points(self, distribution=lambda x: math.exp(x)):
+    def generate_points(self, distribution=None):
         points = []
+        if distribution is None:
+            distribution = lambda r: math.sinh(r) / (math.cosh(self.radius) - 1)
+
         for i in range(0, self.nodecount):
             azimuth = random.uniform(0, 2 * math.pi)
             d_point = (random.uniform(0, self.radius), random.uniform(0, distribution(self.radius)))
@@ -145,9 +148,7 @@ class Graph:
         cnt = list(map(lambda x: x / scnt, cnt))
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.loglog(deg, list(cnt), marker='o', color="blue", linestyle='None', label="emprical distribution")
-        ax.loglog(deg, list(map(lambda x: 1.0/math.pow(x, 3) if x > 0 else 0, deg)), marker='None', color="red",
-                  label="theoretical distribution")
+        ax.loglog(deg, cnt, marker='o', color="blue", linestyle='None', label="empirical distribution")
         ax.set_ylabel("P(k)")
         ax.set_xlabel("Node degree k")
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=4,
@@ -173,6 +174,7 @@ radius = args.radius
 start_time = time.time()
 
 g = Graph(nodes, radius)
+print(len(g.points))
 if args.plot:
     g.plot()
 if args.stats:

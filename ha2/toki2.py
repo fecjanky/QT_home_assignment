@@ -3,7 +3,8 @@ import random
 from math import pi
 import matplotlib.pyplot as plt
 import itertools
-import numpy
+import time
+import argparse
 
 
 class PolarPoint:
@@ -75,24 +76,50 @@ class Graph:
             points.append(PolarPoint(radius=d_point[0], azimuth=azimuth))
         return points
 
-    def plot(self):
+    def plot(self, filename=None):
         r = [p.radius for p in self.points]
         theta = [p.azimuth for p in self.points]
-        ax = plt.subplot(projection='polar')
+        plt.clf()
+        plt.close()
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='polar')
+
         ax.set_rmax(self.radius)
         ax.spines['polar'].set_visible(False)
-        ax.scatter(theta, r, c=theta, zorder=3)
+        ax.scatter(theta, r, c=theta, s=2, zorder=3)
         ax.set_rticks([self.radius / 4, self.radius / 2, self.radius * 3 / 4
                           , self.radius])
         ax.set_thetagrids([])
         for l in self.links:
             ax.plot((l[0].azimuth, l[1].azimuth), (l[0].radius, l[1].radius), color='black', marker="None", zorder=0,
                     linewidth=0.25)
-        plt.show(ax)
+        outfile = filename if filename is not None else 'graph.png'
+        fig.savefig(outfile, orientation='landscape', dpi=1200)
+
+    def print_stats(self):
+        print("stats")
 
 
-nodes = 500
-radius = 14
+parser = argparse.ArgumentParser(description='hyperbolic geometry complex network analysis',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument('-p', '--plot', type=str,
+                    help='plot to file, default name is graph.png', nargs='?')
+parser.add_argument('-s', '--stats', action='store_true',
+                    help='print out stats')
+parser.add_argument('-n', '--nodes', type=int, default=100, help='number of nodes to use in the generator')
+parser.add_argument('-r', '--radius', type=int, default=14, help='the radius of the disc to be used')
+
+args = parser.parse_args()
+nodes = args.nodes
+radius = args.radius
+
+start_time = time.time()
+
 g = Graph(nodes, radius)
-g.plot()
-a = 0
+if args.plot:
+    g.plot(args.plot[0] if len(args.plot) > 0 else None)
+if args.stats:
+    g.print_stats()
+
+print("Execution took {value} seconds".format(value=(time.time() - start_time)))

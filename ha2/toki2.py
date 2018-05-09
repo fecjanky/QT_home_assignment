@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import itertools
 import time
 import argparse
+import networkx as nx
+import statistics
 
 
 class PolarPoint:
@@ -26,7 +28,7 @@ class PolarPoint:
         return self.radius + p2.radius + 2 * math.log(dtheta / 2)
 
     def to_cartesian(self):
-        return (self.radius * math.cos(self.azimuth), self.radius * math.sin(self.azimuth))
+        return self.radius * math.cos(self.azimuth), self.radius * math.sin(self.azimuth)
 
 
 def test_polar_point_creation():
@@ -58,11 +60,11 @@ class Graph:
         self.points = self.generate_points(distribution)
         self.links = self.generate_links()
 
+    # according to Eq.8
     def generate_links(self):
         return [p for p in itertools.combinations(self.points, 2) if lte(p[0].hyperbolic_distance(p[1]), self.radius)]
 
-        # according to Eq.8
-
+    # use rejection sampling to generate points with a given distribution
     def generate_points(self, distribution=lambda x: math.exp(x)):
         points = []
         for i in range(0, self.nodecount):
@@ -95,18 +97,48 @@ class Graph:
                     linewidth=0.25)
         outfile = filename if filename is not None else 'graph.png'
         fig.savefig(outfile, orientation='landscape', dpi=1200)
+        plt.clf()
+        plt.close()
 
-    def print_stats(self):
-        print("stats")
+    def as_nx_graph(self):
+        G = nx.Graph()
+        G.add_nodes_from(self.points)
+        G.add_edges_from(self.links)
+        return G
+
+    def get_avg_degs(self):
+        def nodes_closer_than(radius):
+            return (n for n in self.points if lte(n.radius, radius))
+
+        G = self.as_nx_graph()
+        degs = ((r, dict(G.degree(nodes_closer_than(r))).values()) for r in range(1, self.radius + 1, 1))
+        avg_degs = ((r, statistics.mean(a)) for r, a in degs if len(a) > 0)
+        return zip(*avg_degs)
+
+    def plot_stats(self, filename=None):
+        radius, avg_degs = self.get_avg_degs()
+        r = range(0, radius[-1] + 1, 1)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.semilogy(radius, avg_degs, color='black', marker='x', label="simulated avg. degree")
+        ax.semilogy(r, list(map(lambda r: 4 / math.pi * nodes * math.exp(-r / 2), r)), color='red',
+                    label='theoretical avg. degree')
+        ax.set_xlabel('radius')
+        ax.set_ylabel('average degree')
+        plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+                   ncol=2, mode="expand", borderaxespad=0.)
+        outfile = filename if filename is not None else 'graph_stats.png'
+        fig.savefig(outfile, orientation='landscape', dpi=1200)
+        print("printing stats")
+        plt.clf()
+        plt.close()
 
 
 parser = argparse.ArgumentParser(description='hyperbolic geometry complex network analysis',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('-p', '--plot', type=str,
-                    help='plot to file, default name is graph.png', nargs='?')
-parser.add_argument('-s', '--stats', action='store_true',
-                    help='print out stats')
+parser.add_argument('-p', '--plot', help='plot to file, default name is graph.png', action='store_true')
+parser.add_argument('-s', '--stats', help='print out stats', action='store_true')
 parser.add_argument('-n', '--nodes', type=int, default=100, help='number of nodes to use in the generator')
 parser.add_argument('-r', '--radius', type=int, default=14, help='the radius of the disc to be used')
 
@@ -118,8 +150,8 @@ start_time = time.time()
 
 g = Graph(nodes, radius)
 if args.plot:
-    g.plot(args.plot[0] if len(args.plot) > 0 else None)
+    g.plot()
 if args.stats:
-    g.print_stats()
+    g.plot_stats()
 
 print("Execution took {value} seconds".format(value=(time.time() - start_time)))

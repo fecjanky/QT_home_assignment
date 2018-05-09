@@ -126,8 +126,8 @@ class Graph:
                     label='theoretical avg. degree')
         ax.set_xlabel('radius')
         ax.set_ylabel('average degree')
-        plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-                   ncol=2, mode="expand", borderaxespad=0.)
+        ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+                  ncol=2, mode="expand", borderaxespad=0.)
         outfile = filename if filename is not None else 'graph_stats.png'
         fig.savefig(outfile, orientation='landscape', dpi=1200)
         fig.clf()
@@ -141,12 +141,17 @@ class Graph:
         degree_sequence = sorted([d for n, d in self.as_nx_graph().degree()], reverse=True)
         degreeCount = collections.Counter(degree_sequence)
         deg, cnt = zip(*degreeCount.items())
+        scnt = sum(cnt)
+        cnt = list(map(lambda x: x / scnt, cnt))
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.loglog(deg, list(cnt), marker='o', color="blue", linestyle='None')
-        ax.set_title("Degree distribution")
+        ax.loglog(deg, list(cnt), marker='o', color="blue", linestyle='None', label="emprical distribution")
+        ax.loglog(deg, list(map(lambda x: 1.0/math.pow(x, 3) if x > 0 else 0, deg)), marker='None', color="red",
+                  label="theoretical distribution")
         ax.set_ylabel("P(k)")
         ax.set_xlabel("Node degree k")
+        ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=4,
+                  ncol=2, mode="expand", borderaxespad=0.)
         outfile = filename if filename is not None else 'graph_stats.png'
         fig.savefig(outfile, orientation='landscape', dpi=1200)
         fig.clf()

@@ -19,7 +19,7 @@ class PolarPoint:
         return (self.radius, self.azimuth)
 
     def __eq__(x, y):
-        return x.__key() == y.__key()
+        return math.isclose(x.radius,y.radius) and math.isclose(x.azimuth,y.azimuth)
 
     def __hash__(self):
         return hash(self.__key())

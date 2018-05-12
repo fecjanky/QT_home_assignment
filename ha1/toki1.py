@@ -134,7 +134,7 @@ def plot_data_correlation(data, plot_name, lagrange=500):
     x_packetcountcorrelation = np.linspace(0, lagrange, lagrange)
     plt.plot(x_packetcountcorrelation, y_packetcountcorrelation)
     ax.set_xlabel('lag')
-    ax.set_ylabel('correlation')
+    ax.set_ylabel('auto-correlation')
     fig.savefig(plot_name + '.png', orientation='landscape', dpi=600)
 
 

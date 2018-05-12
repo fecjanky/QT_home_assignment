@@ -85,17 +85,17 @@ def calc_third_moment(interarr):
 windowed_sum_cache = {}
 
 
-def get_windowed_sum(array, lag):
-    assert lag > 0
-    if (array.ctypes.data, lag) not in windowed_sum_cache:
-        if lag == 1:
-            windowed_sum_cache[(array.ctypes.data, lag)] = array
+def get_windowed_sum(array, size):
+    assert size > 0
+    if (array.ctypes.data, size) not in windowed_sum_cache:
+        if size == 1:
+            windowed_sum_cache[(array.ctypes.data, size)] = array
         else:
-            prev = get_windowed_sum(array, lag - 1)
-            wsum = np.fromiter((prev[i] + array[i + lag - 1] for i in range(0, len(prev) - 1)), np.float64,
-                                  len(prev) - 1)
-            windowed_sum_cache[(array.ctypes.data, lag)] = wsum
-    return windowed_sum_cache[(array.ctypes.data, lag)]
+            prev = get_windowed_sum(array, size - 1)
+            wsum = np.fromiter((prev[i] + array[i + size - 1] for i in range(0, len(prev) - 1)), np.float64,
+                               len(prev) - 1)
+            windowed_sum_cache[(array.ctypes.data, size)] = wsum
+    return windowed_sum_cache[(array.ctypes.data, size)]
 
 
 def idi(interarrirval_times, lag):
@@ -103,9 +103,9 @@ def idi(interarrirval_times, lag):
     return np.var(get_windowed_sum(interarrirval_times, lag)) / (
             lag * np.mean(interarrirval_times) * np.mean(interarrirval_times))
 
-def idc(packet_counts, lag):
-    assert lag > 0
-    return np.var(get_windowed_sum(packet_counts, lag)) / (lag * np.mean(packet_counts))
+def idc(packet_counts, t):
+    assert t > 0
+    return np.var(get_windowed_sum(packet_counts, t)) / (t * np.mean(packet_counts))
 
 
 ###########################################

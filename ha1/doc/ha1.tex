@@ -37,13 +37,13 @@
 
 \section{Introduction}
 
-The goal of the 1st home assignment is to perform a similar traffic analysis study that is in \cite{MolnarOnburst} with an arbitrary chosen time series.
-For the analysis a capture file was selected from \url{http://ita.ee.lbl.gov/}. The link to the actual capture is \url{ftp://ita.ee.lbl.gov/traces/dec-pkt-1.tar.Z}. This capture contains 3.3 million packets from 1995. The packets are filtered further based on type. This analysis deals with \verb!dec-pkt-1.tcp! from the archive mentioned before that is around 62MBytes containing around 2.2 million TCP packets.
+The goal of the 1st home assignment is to perform a similar traffic analysis study that is presented in \cite{MolnarOnburst} with an arbitrarily chosen time series.
+For the analysis a capture file was selected from \url{http://ita.ee.lbl.gov/}. The link to the actual capture file archive is \url{ftp://ita.ee.lbl.gov/traces/dec-pkt-1.tar.Z}. This capture contains 3.3 million packets from 1995. The packets are further filtered into multiple files based on packet types (TCP,UDP,etc.). This analysis deals with \verb!dec-pkt-1.tcp! from the archive mentioned before that is around 62 MBytes ands contains around 2.2 million TCP packets.
 
 
 \section{Implementation}
 
-The calculation and plotting have been implemented in the Python programming language.The software is available on \url{https://github.com/fecjanky/QT_home_assignment/blob/master/ha1/toki1.py}.
+The calculation and plotting of the resulting graphs have been implemented in the Python programming language.The software is available on \url{https://github.com/fecjanky/QT_home_assignment/blob/master/ha1/toki1.py}.
 For the implementation the following Python libraries have been utilized:
 
 \begin{itemize}
@@ -67,9 +67,9 @@ The values of Peak-to-Mean Ration (PMR), Squared Coefficient of Variation (SCV) 
  
 \begin{lstlisting}[style=mypython,caption={The functions used for calculating IDI and IDC},label={lst:interarr}]
 def calc_interarrivals(arrivals):
-    if len(arrivals) is 0:
-        return [0]
-    return np.subtract(np.array(arrivals[1:]), arrivals[0:-1])
+    if len(arrivals) < 2:
+        return None
+    return np.subtract(np.array(arrivals[1:]), arrivals[0:-2])
 \end{lstlisting}
 
 

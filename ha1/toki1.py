@@ -8,6 +8,9 @@ import scipy.stats as stats
 import seaborn as sns
 import argparse
 from datetime import datetime, timedelta
+import matplotlib
+
+matplotlib.rcParams['agg.path.chunksize'] = 10000
 
 
 def parse_datetime(datetimestring):
@@ -44,7 +47,8 @@ def parsefile(filename, alternativeSyntax=False, column=0):
         else:
             nptimestamps = np.fromiter((parse_datetime_alt(line.strip(), column) for line in f if line.strip()),
                                        np.float64)
-            return nptimestamps - nptimestamps[0]
+            nptimestamps[0] = 0.0
+            return nptimestamps
 
 
 def calc_interarrivals(arrivals):
@@ -81,33 +85,27 @@ def calc_third_moment(interarr):
 windowed_sum_cache = {}
 
 
-def get_windowed_sum(interarr, k):
-    assert k > 0
-    if (interarr.ctypes.data, k) not in windowed_sum_cache:
-        if k == 1:
-            windowed_sum_cache[(interarr.ctypes.data, k)] = interarr
+def get_windowed_sum(array, lag):
+    assert lag > 0
+    if (array.ctypes.data, lag) not in windowed_sum_cache:
+        if lag == 1:
+            windowed_sum_cache[(array.ctypes.data, lag)] = array
         else:
-            prev = get_windowed_sum(interarr, k - 1)
-            sumlist = np.fromiter((prev[i] + interarr[i + k - 1] for i in range(0, len(prev) - 1)), np.float64,
+            prev = get_windowed_sum(array, lag - 1)
+            wsum = np.fromiter((prev[i] + array[i + lag - 1] for i in range(0, len(prev) - 1)), np.float64,
                                   len(prev) - 1)
-            windowed_sum_cache[(interarr.ctypes.data, k)] = sumlist
-    return windowed_sum_cache[(interarr.ctypes.data, k)]
+            windowed_sum_cache[(array.ctypes.data, lag)] = wsum
+    return windowed_sum_cache[(array.ctypes.data, lag)]
 
 
-def idi(interarr, k):
-    assert k > 0
-    sumlist = get_windowed_sum(interarr, k)
-    variance = np.var(sumlist)
-    idival = variance / (k * np.mean(interarr) * np.mean(interarr))
-    return idival
+def idi(interarrirval_times, lag):
+    assert lag > 0
+    return np.var(get_windowed_sum(interarrirval_times, lag)) / (
+            lag * np.mean(interarrirval_times) * np.mean(interarrirval_times))
 
-
-def idc(counts, t):
-    assert t > 0
-    sumlist = get_windowed_sum(counts, t)
-    variance = np.var(sumlist)
-    idcval = variance / (t * np.mean(counts))
-    return idcval
+def idc(packet_counts, lag):
+    assert lag > 0
+    return np.var(get_windowed_sum(packet_counts, lag)) / (lag * np.mean(packet_counts))
 
 
 ###########################################
@@ -118,7 +116,7 @@ def plot_interarrival_pdf(interarr):
     fig, ax = plt.subplots()
     sns.distplot(interarr)
     ax.set_xlabel('interarrival length[s]')
-    ax.set_ylabel('pdf')
+    ax.set_ylabel('kde')
     fig.savefig('interarrival.png', orientation='landscape', dpi=600)
 
 

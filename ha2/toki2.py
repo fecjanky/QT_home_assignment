@@ -131,7 +131,7 @@ class Graph:
         ax.set_ylabel('average degree')
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
                   ncol=2, mode="expand", borderaxespad=0.)
-        outfile = filename if filename is not None else 'graph_stats.png'
+        outfile = filename if filename is not None else 'graph_radial_stats.png'
         fig.savefig(outfile, orientation='landscape', dpi=1200)
         fig.clf()
         plt.close()
@@ -164,6 +164,7 @@ parser = argparse.ArgumentParser(description='hyperbolic geometry complex networ
 
 parser.add_argument('-p', '--plot', help='plot to file, default name is graph.png', action='store_true')
 parser.add_argument('-s', '--stats', help='print out stats', action='store_true')
+parser.add_argument('-v', '--radial', help='print out radial stats', action='store_true')
 parser.add_argument('-n', '--nodes', type=int, default=100, help='number of nodes to use in the generator')
 parser.add_argument('-r', '--radius', type=int, default=14, help='the radius of the disc to be used')
 
@@ -179,5 +180,7 @@ if args.plot:
     g.plot()
 if args.stats:
     g.plot_stats()
+if args.radial:
+	g.plot_degree_vs_radius()
 
 print("Execution took {value} seconds".format(value=(time.time() - start_time)))

@@ -52,9 +52,9 @@ def parsefile(filename, alternativeSyntax=False, column=0):
 
 
 def calc_interarrivals(arrivals):
-    if len(arrivals) < 2:
-        return None
-    return np.subtract(np.array(arrivals[1:]), arrivals[0:-2])
+    if len(arrivals) is 0:
+        return [0]
+    return np.subtract(np.array(arrivals[1:]), arrivals[0:-1])
 
 
 def calc_intensity(timelist):

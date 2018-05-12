@@ -42,8 +42,9 @@ def parsefile(filename, alternativeSyntax=False, column=0):
             nptimestamps = np.fromiter(((t - t0).total_seconds() for t in timestamps), np.float64, len(timestamps))
             return np.sort(nptimestamps)
         else:
-            return np.fromiter((parse_datetime_alt(line.strip(), column) for line in f if line.strip()),
-                               np.float64)
+            nptimestamps = np.fromiter((parse_datetime_alt(line.strip(), column) for line in f if line.strip()),
+                                       np.float64)
+            return nptimestamps - nptimestamps[0]
 
 
 def calc_interarrivals(arrivals):

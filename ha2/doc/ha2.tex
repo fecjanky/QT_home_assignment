@@ -41,7 +41,7 @@ The task was to study section I, II, III and IV A of~\cite{HyperbolicGeoNetworks
 \section{Implementation}
 The implementation of the graph generation and analysis has been done in Python language. The software is available on \url{https://github.com/fecjanky/QT_home_assignment/blob/master/ha2/toki2.py}.
 The graph generation has been implemented as described in ~\cite{HyperbolicGeoNetworks}. The node density on the disc with radius \emph{R} along the radial polar coordinates followed an exponential distribution $ \rho~(r) \simeq e^r $~.
-The connection probability functions was based on the hyperbolic distance between nodes on the disc given by: $ p(x) = \Theta(R - x) $
+The connection probability was analogous to the hyperbolic distance between nodes on the disc given by: $ p(x) = \Theta(R - x) $
 For the implementation the following Python libraries have been utilized:
 \begin{itemize}
 \item \verb!matplotlib! , for creating the representation of the generated graph in polar coordinates and for plotting the degree distribution
@@ -89,7 +89,7 @@ R = 2 \ln[8 N / (\pi \overline{k})] \rightarrow \overline{k} \simeq 11.61, if\;R
 
 The polar plot of the generated network can be seen on Figure~\ref{fig:graph}. The empirical average degree calculated for the generated graph was:
 \begin{equation}
-\overline{k} =  11.8084
+\overline{k}_{sim} =  11.8084
 \end{equation}
 
 The relative error between the average obtained from the generated one and the theoretical average was:
@@ -131,7 +131,7 @@ The average degree as a function of radius from the center on the disc is illust
 
 As a part of this homework a random network has been generated using  hyperbolic geometry based on \cite{HyperbolicGeoNetworks} to study the
 structure and function of complex network in purely geometric terms. The edge probability is analogous to the hyperbolic distance between two nodes and if that distance is below a threshold between 
-any of two nodes and edge is present between them.
+any of two nodes an edge is present between them resulting in similar structure as it would have been created by specifying and edge probability for the random graph and generating edges between them based on that.
 The simulation results were resembling the theoretical results and also the ones presented in \cite{HyperbolicGeoNetworks} with around 2\% relative error.
 
 

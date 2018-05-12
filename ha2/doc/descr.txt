@@ -1,0 +1,16 @@
+Dear Students,
+
+For the second half of the subject, please, study the paper
+https://www.stat.berkeley.edu/~aldous/206-SNET/Papers/kriokov_hyperbolic.pdf
+with emphasis on the section I, II, III and IV A.
+
+The homework is the following:
+
+In any programming language/tool generate a network according to the model described in the paper 
+(in Section IV.A.) with the following parameters: N=5000 (the number of nodes), R=14 (the radius of the disk on which the nodes are uniformly distributed). Then, please, calculate numerically the empirical average degree, and plot on a log-log scale the empirical degree distribution of this generated network.
+
+With best regards - Jozsef Biro
+
+
+theoretical: avg degree = Eq.13
+func EQ.12
